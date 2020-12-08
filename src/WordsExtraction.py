@@ -7,7 +7,7 @@ class WordsExtraction:
         return word_list
 
     def extractToxicWordIndexUsingSpans(self,row):
-        if(row.toxic):
+        if(row.toxicity):
             new_spans = []
             ## compare every 2 indeces
             for x, y in zip(row.spans, row.spans[1:]):
