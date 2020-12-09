@@ -67,7 +67,6 @@ class Attention(Layer):
 
     def build(self, input_shape):
         assert len(input_shape) == 3
-        print(self.name, '{}_W'.format(self.name))
         self.W = self.add_weight(shape=(input_shape[-1], input_shape[-1],),
                                  initializer=self.init,
                                  name='{}_W'.format(self.name),

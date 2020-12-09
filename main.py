@@ -24,7 +24,7 @@ from sklearn.metrics import roc_auc_score
 ##set to .env
 MAX_FEATURES = 300000 # maximum number of unique words that should be included in the tokenized word index
 MAX_WORD_NUM = 50     # maximum number of words in each sentence
-EMBED_SIZE = 50 
+EMBED_SIZE = 100  ## same value as in dimension of glove
 VAL_SPLIT = 0.2  
 REG_PARAM = 1e-13
 l2_reg = regularizers.l2(REG_PARAM)
@@ -96,7 +96,7 @@ word_counts = tokenizer.word_counts
 
 ##get glove embeddings
 embeddings_index = {}
-f = open(os.path.join(os.getcwd(), 'data/glove.twitter.27B.50d.txt'), encoding='utf8')
+f = open(os.path.join(os.getcwd(), 'data/glove.twitter.27B.100d.txt'), encoding='utf8')
 for line in f:
     values = line.split()
     word = values[0]
@@ -155,12 +155,12 @@ print(x_train, y_train.shape)
 embedding_layer = Embedding(len(word_index)+1 ,EMBED_SIZE,weights=[embedding_matrix], input_length=MAX_WORD_NUM, trainable= True)
 word_input = Input(shape=MAX_WORD_NUM, dtype='float32')
 word_sequences = embedding_layer(word_input)
-word_lstm = Bidirectional(LSTM(150, return_sequences=True, kernel_regularizer=l2_reg))(word_sequences)
+word_lstm = Bidirectional(LSTM(50, return_sequences=True, kernel_regularizer=l2_reg))(word_sequences)
 word_dense = TimeDistributed(Dense(100, kernel_regularizer=l2_reg))(word_lstm)
-word_att = Dropout(0.5)(Attention()(word_dense))#-to finish
-preds = Dense(1, activation='relu')(word_att)
+word_att = Dropout(0.5)(Attention()(word_dense))#
+preds = Dense(1, activation='relu')(word_att) ##softmax, elu?
 model = Model(word_input, preds)
-model.compile(loss='binary_crossentropy',optimizer='rmsprop',metrics=['acc'])
+model.compile(loss='binary_crossentropy',optimizer='rmsprop',metrics=['acc']) ##adam
 checkpoint = ModelCheckpoint('best_model.h5', verbose=-2, monitor='val_loss',save_best_only=True, mode='auto') 
 history = model.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=200, batch_size=512,shuffle=True, callbacks=[checkpoint])
 
