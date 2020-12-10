@@ -1,6 +1,7 @@
 import pandas as pd
-from src.WordsExtraction import WordsExtraction
-from ast import literal_eval
+
+from src.SemEvalData import SemEvalData
+from src.JigsawData import JigsawData
 from nltk import tokenize
 import nltk
 from keras.preprocessing.text import Tokenizer,  text_to_word_sequence
@@ -18,13 +19,14 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 from sklearn.utils import shuffle
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, accuracy_score
+
 
 
 ##set to .env
 MAX_FEATURES = 300000 # maximum number of unique words that should be included in the tokenized word index
 MAX_WORD_NUM = 50     # maximum number of words in each sentence
-EMBED_SIZE = 100  ## same value as in dimension of glove
+EMBED_SIZE = 50  ## same value as in dimension of glove
 VAL_SPLIT = 0.2  
 REG_PARAM = 1e-13
 l2_reg = regularizers.l2(REG_PARAM)
@@ -32,63 +34,40 @@ l2_reg = regularizers.l2(REG_PARAM)
 
 nltk.download('punkt')
 ## load data
-train = pd.read_csv("data/tsd_trial.csv")
-train["spans"] = train.spans.apply(literal_eval)
+train_data_semeval = SemEvalData(MAX_WORD_NUM)
+train_data_semeval.load_data("data/tsd_trial.csv")
+train_df = train_data_semeval.preprocess()
+
+extra_train = JigsawData(MAX_WORD_NUM)
+extra_train.load_data("data/train.csv")
+extra_train_df = extra_train.preprocess()
+
 
 
 ## set category 1- toxic, 0- non-toxic
-train["toxicity"] = ( train.spans.map(len) > 0 ).astype(int)
-#train = train.iloc[0:60000]
-## extract toxic words
-words_extractor = WordsExtraction()
-train['toxic_words'] = train.apply(lambda row: words_extractor.extractToxicWordIndexUsingSpans(row), axis=1)
 
-def clean_str(string):
-    """
-    string cleaning for dataset
-    Every dataset is lower cased except
-    """
-    string = re.sub(r"\\", "", string)    
-    string = re.sub(r"\'", "", string)    
-    string = re.sub(r"\"", "", string)
-    string = re.sub(r"\\n","", string)    
-    return string.strip().lower()
 
-def extract_toxity(toxic_words, sentences):
-    toxicity = []
-    for sentence in sentences:
-        if any(word in sentence for word in toxic_words):
-            toxicity.append(np.full( MAX_WORD_NUM, 1.0, dtype='float32'))
-        else:
-            toxicity.append(np.full(MAX_WORD_NUM, 0.0, dtype='float32'))
-    return toxicity
+
 
 paras = []
 labels = []
 texts = []
 sent_lens = []
 sent_nums = []
-## clean text
-train['text'] = train.apply(lambda row: clean_str(row.text), axis=1)
-## clean toxic words
-train['toxic_words'] = train.apply(lambda row: [clean_str(word) for word in row.toxic_words], axis =1 )
-## extract senteces
-train['sentences'] = train.apply(lambda row: tokenize.sent_tokenize(row.text), axis=1)
 
-## toxity per sentence
-train['toxicity_sentence'] = train.apply(lambda row: extract_toxity(row.toxic_words, row.sentences), axis = 1)
-
-first = train.iloc[1]
-train_data = {'sentence':  train.sentences.sum(),
-        'toxicity_sentence': train.toxicity_sentence.sum()
+print( train_df)
+##tokenize words
+len_tr = len(train_df)
+# result = train_df.append(extra_train_df, ignore_index=True, sort=False)
+result = train_df
+train_data = {'sentence':  result.sentences.sum(),
+        'toxicity_sentence': result.toxicity_sentence.sum()
         }
 
 train_df = pd.DataFrame (train_data, columns = ['sentence','toxicity_sentence'])
 
-
-##tokenize words
 tokenizer = Tokenizer(num_words=MAX_FEATURES, oov_token=True)
-tokenizer.fit_on_texts(train.sentences.sum())
+tokenizer.fit_on_texts(train_df.sentence.sum())
 word_index = tokenizer.word_index
 word_counts = tokenizer.word_counts
 ###
@@ -96,7 +75,7 @@ word_counts = tokenizer.word_counts
 
 ##get glove embeddings
 embeddings_index = {}
-f = open(os.path.join(os.getcwd(), 'data/glove.twitter.27B.100d.txt'), encoding='utf8')
+f = open(os.path.join(os.getcwd(), 'data/glove.twitter.27B.50d.txt'), encoding='utf8')
 for line in f:
     values = line.split()
     word = values[0]
@@ -155,15 +134,14 @@ print(x_train, y_train.shape)
 embedding_layer = Embedding(len(word_index)+1 ,EMBED_SIZE,weights=[embedding_matrix], input_length=MAX_WORD_NUM, trainable= True)
 word_input = Input(shape=MAX_WORD_NUM, dtype='float32')
 word_sequences = embedding_layer(word_input)
-word_lstm = Bidirectional(LSTM(50, return_sequences=True, kernel_regularizer=l2_reg))(word_sequences)
-word_dense = TimeDistributed(Dense(100, kernel_regularizer=l2_reg))(word_lstm)
-word_att = Dropout(0.5)(Attention()(word_dense))#
-preds = Dense(1, activation='relu')(word_att) ##softmax, elu?
+word_lstm = Bidirectional(LSTM(40, return_sequences=True, kernel_regularizer=l2_reg))(word_sequences)
+word_dense = TimeDistributed(Dense(70, kernel_regularizer=l2_reg))(word_lstm)
+word_att = Dropout(0.2)(Attention()(word_dense))#
+preds = Dense(1, activation='elu')(word_att) ##softmax, elu?
 model = Model(word_input, preds)
 model.compile(loss='binary_crossentropy',optimizer='rmsprop',metrics=['acc']) ##adam
 checkpoint = ModelCheckpoint('best_model.h5', verbose=-2, monitor='val_loss',save_best_only=True, mode='auto') 
-history = model.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=200, batch_size=512,shuffle=True, callbacks=[checkpoint])
-
+history = model.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=200, batch_size=256,shuffle=True, callbacks=[checkpoint])
 print(history.history.keys())
 plt.plot(history.history['acc'])
 plt.plot(history.history['val_acc'])
