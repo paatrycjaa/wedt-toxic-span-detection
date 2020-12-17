@@ -2,7 +2,7 @@ import pandas as pd
 from ast import literal_eval
 import numpy as np
 from src.WordsExtraction import WordsExtraction
-from src.preprocessing import clean_str
+from src.preprocessing import clean_str, preprocess_bayes
 from src.DataProcessig import DataProcessing
 from nltk import tokenize
 
@@ -21,8 +21,8 @@ class SemEvalData(DataProcessing):
         self.train['toxic_words'] = self.train.apply(lambda row: words_extractor.extractToxicWordIndexUsingSpans(row), axis=1)
         ## clean text
         self.train['text'] = self.train.apply(lambda row: clean_str(row.text), axis=1)
-        ## clean toxic words
-        self.train['toxic_words'] = self.train.apply(lambda row: [clean_str(word) for word in row.toxic_words], axis =1 )
+        ## clean toxic words - previously it was only clean_str
+        self.train['toxic_words'] = self.train.apply(lambda row: [preprocess_bayes(word) for word in row.toxic_words], axis =1 )
         ## extract senteces
         self.train['sentences'] = self.train.apply(lambda row: tokenize.sent_tokenize(row.text), axis=1)
 

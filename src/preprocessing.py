@@ -1,16 +1,25 @@
 import re
 import numpy as np
 import os
-def clean_str(string):
+import string
+def preprocess_bayes(text):
+    text = clean_str(text)
+    # Remove punctation (!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~)
+    text = text.translate(str.maketrans('', '', string.punctuation))
+        # Remove digits
+    text = re.sub('\d', '', text)
+    return text
+
+def clean_str(text):
     """
     string cleaning for dataset
     Every dataset is lower cased except
     """
-    string = re.sub(r"\\", "", string)    
-    string = re.sub(r"\'", "", string)    
-    string = re.sub(r"\"", "", string)
-    string = re.sub("\\n"," ", string)    
-    return string.strip().lower()
+    text = re.sub(r"\\", "", text)    
+    text = re.sub(r"\'", "", text)    
+    text = re.sub(r"\"", "", text)
+    text = re.sub("\\n"," ", text)    
+    return text.strip().lower()
 
 def get_embeddings_index(PATH):
     ##get glove embeddings
