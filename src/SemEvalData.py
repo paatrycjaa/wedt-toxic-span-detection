@@ -20,7 +20,7 @@ class SemEvalData(DataProcessing):
         words_extractor = WordsExtraction()
         self.train['toxic_words'] = self.train.apply(lambda row: words_extractor.extractToxicWordIndexUsingSpans(row), axis=1)
         ## clean text
-        self.train['text'] = self.train.apply(lambda row: clean_str(row.text), axis=1)
+        self.train['text'] = self.train.apply(lambda row: preprocess_bayes(row.text), axis=1)
         ## clean toxic words - previously it was only clean_str
         self.train['toxic_words'] = self.train.apply(lambda row: [preprocess_bayes(word) for word in row.toxic_words], axis =1 )
         ## extract senteces
