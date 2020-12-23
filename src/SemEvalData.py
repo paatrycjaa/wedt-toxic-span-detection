@@ -16,6 +16,10 @@ class SemEvalData(DataProcessing):
         return self.train
     
     def preprocess(self):
+        print(self.train.head(10))
+        null_check = self.train.isnull().sum()
+        print(self.train.head(10))
+        self.train["text"].fillna("unknown", inplace=True)
         self.train["toxicity"] = ( self.train.spans.map(len) > 0 ).astype(int)
         words_extractor = WordsExtraction()
         self.train['toxic_words'] = self.train.apply(lambda row: words_extractor.extractToxicWordIndexUsingSpans(row), axis=1)
