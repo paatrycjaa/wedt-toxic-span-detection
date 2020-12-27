@@ -3,7 +3,7 @@ from ast import literal_eval
 import numpy as np
 from src.WordsExtraction import WordsExtraction
 from src.preprocessing import clean_str, preprocess_bayes
-from src.DataProcessig import DataProcessing
+from src.DataProcessing import DataProcessing
 from nltk import tokenize
 
 class SemEvalData(DataProcessing):
@@ -16,17 +16,16 @@ class SemEvalData(DataProcessing):
         return self.train
     
     def preprocess(self):
-        print(self.train.head(10))
         null_check = self.train.isnull().sum()
-        print(self.train.head(10))
         self.train["text"].fillna("unknown", inplace=True)
         self.train["toxicity"] = ( self.train.spans.map(len) > 0 ).astype(int)
         words_extractor = WordsExtraction()
         self.train['toxic_words'] = self.train.apply(lambda row: words_extractor.extractToxicWordIndexUsingSpans(row), axis=1)
+        self.train['original_text'] = self.train['text']
         ## clean text
-        self.train['text'] = self.train.apply(lambda row: preprocess_bayes(row.text), axis=1)
+        self.train['text'] = self.train.apply(lambda row: clean_str(row.text), axis=1)
         ## clean toxic words - previously it was only clean_str
-        self.train['toxic_words'] = self.train.apply(lambda row: [preprocess_bayes(word) for word in row.toxic_words], axis =1 )
+        self.train['toxic_words'] = self.train.apply(lambda row: [clean_str(word) for word in row.toxic_words], axis =1 )
         ## extract senteces
         self.train['sentences'] = self.train.apply(lambda row: tokenize.sent_tokenize(row.text), axis=1)
 
@@ -45,3 +44,7 @@ class SemEvalData(DataProcessing):
                 # toxicity.append(np.full(self.MAX_WORD_NUM, 0.0, dtype='float32'))
                 toxicity.append(0.0)
         return toxicity
+    def get_classes_amount(self, train_df):
+        return super().get_classes_amount(train_df)
+    def get_missing_class_elements(self,df, N, classValue):
+        return super().get_missing_class_elements(df, N, classValue)
