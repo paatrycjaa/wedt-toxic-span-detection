@@ -48,3 +48,12 @@ def get_embeddings_matrix(word_index, EMBED_SIZE, embeddings_index):
         print('Total absent words are', absent_words, 'which is', "%0.2f" % (absent_words * 100 / len(word_index)),
             '% of total words')
         return embedding_matrix
+def getSpansByToxicWords(toxicwords, sentence):
+    spans = []
+    for word in toxicwords:
+        if(len(word)> 1):
+            start = sentence.find(word)
+            end = start + len(word)
+            span = [*range(start, end, 1)]
+            spans = spans + span
+    return spans
