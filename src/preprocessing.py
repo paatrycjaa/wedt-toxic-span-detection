@@ -2,6 +2,8 @@ import re
 import numpy as np
 import os
 import string
+
+
 def preprocess_bayes(text):
     text = clean_str(text)
     # Remove punctation (!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~)
@@ -57,3 +59,6 @@ def getSpansByToxicWords(toxicwords, sentence):
             span = [*range(start, end, 1)]
             spans = spans + span
     return spans
+def getToxicWordsBayes(vectorizer,vect, treshold):
+    ## tutaj jakos treshold trzeba zaaplikowac.. tylko jak?
+    return vectorizer.inverse_transform(vect)[0]
