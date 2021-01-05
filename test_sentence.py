@@ -10,7 +10,7 @@ from src.attention_exp import getWordsByAttention, wordAttentionWeights
 from src.Attention import Attention
 
 
-MAX_WORD_NUM = 40 
+MAX_WORD_NUM = 100 
 MAX_FEATURES = 200000
 TRESHOLD = 0.016
 
@@ -69,8 +69,8 @@ def neuralnetwork_preprocess(text):
     return text_cleaned, tokenized, data_index
 
 def test_lime(text):
-    print(text)
     text_cleaned, sentences, data_index = neuralnetwork_preprocess(text)
+    model = keras.models.load_model('attention_model')
     return
 
 def test_attention(text):
@@ -82,6 +82,7 @@ def test_attention(text):
     for i in range(len(tokenized_data)):
         in_data = tokenized_data[i].reshape(1,MAX_WORD_NUM)
         y = model.predict(in_data)
+        print(y)
         hidden_word_encodings = hidden_word_encoding_out.predict(in_data)
         # Compute context vector using output of dense layer
         ait = wordAttentionWeights(hidden_word_encodings,word_context)
@@ -94,4 +95,6 @@ def test_attention(text):
 if __name__ == "__main__":
     nltk.download('wordnet')
     span = test_sentence("Another idiot!", "attention")
-    span = test_sentence("These freaking donkeys all need to be removed from office. I'm so sick and tired of these lifelong politicians who all seem clueless and could never run their own business.", "attention")
+    span = test_sentence("To be or not be that is a question", "attention")
+    print(span)
+    #span = test_sentence("These freaking donkeys all need to be removed from office. I'm so sick and tired of these lifelong politicians who all seem clueless and could never run their own business.", "attention")
