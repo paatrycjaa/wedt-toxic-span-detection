@@ -2,6 +2,7 @@ import re
 import numpy as np
 import os
 import string
+import difflib
 
 
 def preprocess_bayes(text):
@@ -50,15 +51,23 @@ def get_embeddings_matrix(word_index, EMBED_SIZE, embeddings_index):
         print('Total absent words are', absent_words, 'which is', "%0.2f" % (absent_words * 100 / len(word_index)),
             '% of total words')
         return embedding_matrix
-def getSpansByToxicWords(toxicwords, sentence):
+
+def getSpansByToxicWords(toxicwords, sentence, positions=[]):
     spans = []
+    print(toxicwords, sentence, positions)
     for word in toxicwords:
         if(len(word)> 1):
             start = sentence.find(word)
             end = start + len(word)
+            for pos in positions:
+                if(pos <= end):
+                    end = end+1
+                if(pos < start):
+                    start = start + 1     
             span = [*range(start, end, 1)]
             spans = spans + span
     return spans
+
 def getToxicWordsBayes(vectorizer,vect, treshold):
     words = vectorizer.get_feature_names()
     array = vect.todense().getA()
@@ -70,3 +79,12 @@ def getToxicWordsBayes(vectorizer,vect, treshold):
         i=i+1
     
     return [words[j] for j in num]
+def get_diff(original, cleaned):
+    original =  re.sub("\\n"," ", original) 
+    lower_cased = original.lower()
+    positions = []
+    for i,s in enumerate(difflib.ndiff(lower_cased, cleaned)):
+        if s[0]==' ': continue
+        else: positions.append(i)
+    return positions
+    
