@@ -4,8 +4,10 @@ class WordsExtraction:
     def extractWordIndexUsingList(self,text, span_list):
         word_list = []
         for [fst, snd] in span_list:
-            word_list.append(sent_tokenize(text[fst:snd+1]))
-        return word_list[0]
+            sentences = sent_tokenize(text[fst:snd+1])
+            for sent in sentences:
+                word_list.append(sent)
+        return word_list
 
     def extractToxicWordIndexUsingSpans(self,row):
         if(row.toxicity):
