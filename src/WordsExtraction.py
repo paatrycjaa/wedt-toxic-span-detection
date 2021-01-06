@@ -1,10 +1,11 @@
+from nltk.tokenize import sent_tokenize
 class WordsExtraction:
     
     def extractWordIndexUsingList(self,text, span_list):
         word_list = []
         for [fst, snd] in span_list:
-            word_list.append(text[fst:snd+1])
-        return word_list
+            word_list.append(sent_tokenize(text[fst:snd+1]))
+        return word_list[0]
 
     def extractToxicWordIndexUsingSpans(self,row):
         if(row.toxicity):

@@ -17,10 +17,10 @@ def clean_str(text):
     string cleaning for dataset
     Every dataset is lower cased except
     """
-    text = re.sub(r"\\", "", text)    
-    text = re.sub(r"\'", "", text)    
+    text = re.sub(r"\\", "", text)   
+    text = re.sub(r"\'", "", text)  
     text = re.sub(r"\"", "", text)
-    text = re.sub("\\n"," ", text)    
+    text = re.sub("\\n"," ", text) 
     return text.strip().lower()
 
 def get_embeddings_index(PATH):

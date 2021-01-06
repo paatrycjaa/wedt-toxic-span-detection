@@ -31,7 +31,7 @@ class SemEvalData(DataProcessing):
 
         ## toxity per sentence
         self.train['toxicity_sentence'] = self.train.apply(lambda row: self.__extract_toxity(row.toxic_words, row.sentences), axis = 1)
-        
+    
         return self.train
 
     def __extract_toxity(self,toxic_words, sentences):
