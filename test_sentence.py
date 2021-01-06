@@ -166,7 +166,7 @@ def test_lime(text):
     c = make_pipeline(Transform(tokenizer),model)
     y_pred = model.predict(vect)
     toxic_words  = []
-    for i in range(len(tokenized)):
+    for i in range(len(y_pred)):
         #print(vect[i])
         if np.argmax(y_pred[i]) == 1 :
             text_ = ' '.join(sentences[i])
