@@ -60,5 +60,13 @@ def getSpansByToxicWords(toxicwords, sentence):
             spans = spans + span
     return spans
 def getToxicWordsBayes(vectorizer,vect, treshold):
-    ## tutaj jakos treshold trzeba zaaplikowac.. tylko jak?
-    return vectorizer.inverse_transform(vect)[0]
+    words = vectorizer.get_feature_names()
+    array = vect.todense().getA()
+    i = 0;
+    num = []
+    for val in array[0]:
+        if val > treshold :
+            num.append(i)
+        i=i+1
+    
+    return [words[j] for j in num]
