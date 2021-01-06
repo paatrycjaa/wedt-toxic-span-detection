@@ -164,15 +164,15 @@ def test_lime(text):
     #print(vect)
     model = keras.models.load_model("lstm_drop_jul_train.h5")
     c = make_pipeline(Transform(tokenizer),model)
+    y_pred = model.predict(vect)
     toxic_words  = []
     for i in range(len(tokenized)):
         #print(vect[i])
-        y_pred = model.predict(vect[i])
-        if np.argmax(y_pred) == 1 :
+        if np.argmax(y_pred[i]) == 1 :
             text_ = ' '.join(sentences[i])
             #print(text_)
             toxic = getPredictedWordsFromSentence(text_, TRESHOLD,c)
-            toxic_words = toxic_words + toxic_words
+            toxic_words = toxic_words + toxic
     spans = getSpansByToxicWords(toxic_words, text_cleaned)
     return spans
 
