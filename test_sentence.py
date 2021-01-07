@@ -1,5 +1,5 @@
 import joblib
-from src.preprocessing import preprocess_bayes, getSpansByToxicWords, getToxicWordsBayes, clean_str
+from src.preprocessing import preprocess_bayes, getSpansByToxicWords, getToxicWordsBayes, clean_str, get_diff
 import nltk
 from nltk import tokenize
 from nltk.corpus import stopwords
@@ -72,8 +72,9 @@ def test_bayes(text):
             toxic = getToxicWordsBayes(count_vect, x, 0.5)
             toxic_words = [*toxic_words, *toxic]
 
-    text_preprocessed = preprocess_bayes(text)        
-    spans = getSpansByToxicWords(toxic_words,text_preprocessed)
+    text_preprocessed = preprocess_bayes(text)
+    diff = get_diff(text, text_preprocessed)        
+    spans = getSpansByToxicWords(toxic_words,text_preprocessed, diff)
     return spans
 
 def neuralnetwork_preprocess(text):
