@@ -8,15 +8,27 @@ from keras.models import load_model, Model
 import numpy as np
 import pickle
 from src.attention_exp import getWordsByAttention, wordAttentionWeights
-from src.Attention import Attention
+# from src.Attention import Attention
 import pickle
 from sklearn.pipeline import make_pipeline
 from lime.lime_text import LimeTextExplainer
 
-MAX_WORD_NUM = 100 
+MAX_WORD_NUM = 40
 MAX_FEATURES = 200000
-TRESHOLD = 0.016
+TRESHOLD = 0.012
 MAX_WORD_NUM_2 = 40
+
+count_vect = joblib.load('vectorizer.jbl')
+transformer = joblib.load('transformer.jbl')
+model_bayes = joblib.load('model.jbl')
+lemmer = nltk.stem.WordNetLemmatizer()
+
+model_attention = keras.models.load_model('attention_model')
+hidden_word_encoding_out = Model(inputs=model_attention.input, outputs= model_attention.get_layer('dense').output)
+word_context = model_attention.get_layer('attention').get_weights()
+
+with open('tokenizer_nn.pickle', 'rb') as handle:
+    tokenizer = pickle.load(handle)
 
 class Transform():
     def __init__(self, tokenizer):
@@ -30,6 +42,11 @@ class Transform():
     def transform(self, X, y =None):
         X_ = vectorize(X, self.tokenizer)
         return X_
+
+model_lime = keras.models.load_model("lstm_drop_jul_train.h5")
+c = make_pipeline(Transform(tokenizer),model_lime)
+
+
 
 def getPredictedWordsFromSentence(sentence, threshold,c):
     #print(sentence)
@@ -56,10 +73,6 @@ def test_sentence(text, classifierType):
     return span
     
 def test_bayes(text):
-    count_vect = joblib.load('vectorizer.jbl')
-    transformer = joblib.load('transformer.jbl')
-    model = joblib.load('model.jbl')
-    lemmer = nltk.stem.WordNetLemmatizer()
 
     tokenized = tokenize.sent_tokenize(text)
     sentences = [preprocess_bayes(sentence) for sentence in tokenized]
@@ -67,7 +80,7 @@ def test_bayes(text):
     for sentence in sentences:
         data = ' '.join([lemmer.lemmatize(word) for word in sentence.split()])
         x = count_vect.transform([data])
-        y = model.predict(x)
+        y = model_bayes.predict(x)
         if y == 1.0:
             toxic = getToxicWordsBayes(count_vect, x, 0.5)
             toxic_words = [*toxic_words, *toxic]
@@ -80,7 +93,6 @@ def test_bayes(text):
 def neuralnetwork_preprocess(text):
     text_cleaned = clean_str(text)
     tokenized = tokenize.sent_tokenize(text_cleaned)
-    print(tokenized)
     sentences =[]
     for i in tokenized:
         sentences.append(nltk.word_tokenize(i))
@@ -89,8 +101,6 @@ def neuralnetwork_preprocess(text):
     sentences = [x for x in sentences if x!=[]]
     data_index = np.zeros((len(sentences), MAX_WORD_NUM), dtype='int32')
     ##load tokenizer
-    with open('tokenizer_nn.pickle', 'rb') as handle:
-        tokenizer = pickle.load(handle)
     for i, sentence in enumerate(sentences):
         for k, word in enumerate(sentence):
             try:
@@ -136,18 +146,12 @@ def preprocess_lstm(text):
 ## tring another - thae same resul as test_attention
 def test_attention_2(text):
     
-    with open('tokenizer_lstm.pickle', 'rb') as handle:
-        tokenizer = pickle.load(handle)
-    model = keras.models.load_model('attention_model')
-    hidden_word_encoding_out = Model(inputs=model.input, outputs= model.get_layer('dense').output)
-    word_context = model.get_layer('attention').get_weights()
-    
     text_clean, tokenized, sentences =preprocess_lstm(text)
     vect = vectorize(sentences, tokenizer)
     toxic_words = []
     for i in range(len(vect)):
         in_data = vect[i].reshape(1,MAX_WORD_NUM)
-        y = model.predict(in_data)
+        y = model_attention.predict(in_data)
         Y = np.where(y > 0.5,1,0)
         #warunek na klase
         hidden_word_encodings = hidden_word_encoding_out.predict(in_data)
@@ -158,14 +162,10 @@ def test_attention_2(text):
     return spans
 
 def test_lime(text):
-    with open('tokenizer_nn.pickle', 'rb') as handle:
-        tokenizer = pickle.load(handle)
     text_cleaned, tokenized, sentences = preprocess_lstm(text)
     vect = vectorize(sentences, tokenizer)
     #print(vect)
-    model = keras.models.load_model("lstm_drop_jul_train.h5")
-    c = make_pipeline(Transform(tokenizer),model)
-    y_pred = model.predict(vect)
+    y_pred = model_lime.predict(vect)
     toxic_words  = []
     for i in range(len(y_pred)):
         #print(vect[i])
@@ -176,26 +176,33 @@ def test_lime(text):
             toxic_words = toxic_words + toxic
     diff = get_diff(text, text_cleaned)        
     spans = getSpansByToxicWords(toxic_words, text_cleaned,diff)
+    print(spans)
     return spans
 
 def test_attention(text):
-    text_cleaned, sentences, tokenized_data = neuralnetwork_preprocess(text)
-    model = keras.models.load_model('attention_model')
-    hidden_word_encoding_out = Model(inputs=model.input, outputs= model.get_layer('dense').output)
-    word_context = model.get_layer('attention').get_weights()
+    text_cleaned, tokenized, sentences = preprocess_lstm(text)
+    vect = vectorize(sentences, tokenizer)
+    #y = model_attention.predict(vect)
     toxic_words = []
-    for i in range(len(tokenized_data)):
-        in_data = tokenized_data[i].reshape(1,MAX_WORD_NUM)
-        y = model.predict(in_data)
-        if np.argmax(y[i]) == 1 :
+ 
+    
+    for i in range(len(sentences)):
+        in_data = vect[i].reshape(1,MAX_WORD_NUM)
+        y = model_attention.predict(in_data)
+        Y= np.where(y > 0.5,1,0)
+    #     y_pred = np.argmax(Y)
+    #     print(y_pred)
+        if Y == 1 :
+            text_ = ' '.join(sentences[i])
             hidden_word_encodings = hidden_word_encoding_out.predict(in_data)
             # Compute context vector using output of dense layer
             ait = wordAttentionWeights(hidden_word_encodings,word_context)
             # print(ait)
-            toxic = getWordsByAttention(ait,in_data, sentences[i],TRESHOLD)
+            toxic = getWordsByAttention(ait,in_data, text_,TRESHOLD)
             toxic_words = toxic_words+toxic
     diff = get_diff(text, text_cleaned)        
-    spans = getSpansByToxicWords(toxic_words, text_cleaned)
+    spans = getSpansByToxicWords(toxic_words, text_cleaned, diff)
+
     return spans
 
 if __name__ == "__main__":
