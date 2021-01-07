@@ -54,7 +54,6 @@ def get_embeddings_matrix(word_index, EMBED_SIZE, embeddings_index):
 
 def getSpansByToxicWords(toxicwords, sentence, positions=[]):
     spans = []
-    print(toxicwords, sentence, positions)
     for word in toxicwords:
         if(len(word)> 1):
             start = sentence.find(word)

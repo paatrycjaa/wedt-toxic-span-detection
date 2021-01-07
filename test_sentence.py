@@ -174,7 +174,8 @@ def test_lime(text):
             #print(text_)
             toxic = getPredictedWordsFromSentence(text_, TRESHOLD,c)
             toxic_words = toxic_words + toxic
-    spans = getSpansByToxicWords(toxic_words, text_cleaned)
+    diff = get_diff(text, text_cleaned)        
+    spans = getSpansByToxicWords(toxic_words, text_cleaned,diff)
     return spans
 
 def test_attention(text):
@@ -186,12 +187,14 @@ def test_attention(text):
     for i in range(len(tokenized_data)):
         in_data = tokenized_data[i].reshape(1,MAX_WORD_NUM)
         y = model.predict(in_data)
-        hidden_word_encodings = hidden_word_encoding_out.predict(in_data)
-        # Compute context vector using output of dense layer
-        ait = wordAttentionWeights(hidden_word_encodings,word_context)
-        # print(ait)
-        toxic = getWordsByAttention(ait,in_data, sentences[i],TRESHOLD)
-        toxic_words = toxic_words+toxic
+        if np.argmax(y[i]) == 1 :
+            hidden_word_encodings = hidden_word_encoding_out.predict(in_data)
+            # Compute context vector using output of dense layer
+            ait = wordAttentionWeights(hidden_word_encodings,word_context)
+            # print(ait)
+            toxic = getWordsByAttention(ait,in_data, sentences[i],TRESHOLD)
+            toxic_words = toxic_words+toxic
+    diff = get_diff(text, text_cleaned)        
     spans = getSpansByToxicWords(toxic_words, text_cleaned)
     return spans
 
