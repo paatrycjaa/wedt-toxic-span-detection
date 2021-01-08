@@ -43,7 +43,7 @@ class Transform():
         X_ = vectorize(X, self.tokenizer)
         return X_
 
-model_lime = keras.models.load_model("lstm_drop_jul_train.h5")
+model_lime = keras.models.load_model("lstm_pooling")
 c = make_pipeline(Transform(tokenizer),model_lime)
 
 
@@ -170,6 +170,25 @@ def test_lime(text):
     for i in range(len(y_pred)):
         #print(vect[i])
         if np.argmax(y_pred[i]) == 1 :
+            text_ = ' '.join(sentences[i])
+            #print(text_)
+            toxic = getPredictedWordsFromSentence(text_, TRESHOLD,c)
+            toxic_words = toxic_words + toxic
+    diff = get_diff(text, text_cleaned)        
+    spans = getSpansByToxicWords(toxic_words, text_cleaned,diff)
+    print(spans)
+    return spans
+
+def test_lime_2(text):
+    text_cleaned, tokenized, sentences = preprocess_lstm(text)
+    vect = vectorize(sentences, tokenizer)
+    #print(vect)
+    toxic_words  = []
+    for i in range(len(sentences)):
+        in_data = vect[i].reshape(1,MAX_WORD_NUM)
+        y = model_attention.predict(in_data)
+        Y= np.where(y > 0.5,1,0)
+        if Y == 1 :
             text_ = ' '.join(sentences[i])
             #print(text_)
             toxic = getPredictedWordsFromSentence(text_, TRESHOLD,c)
