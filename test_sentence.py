@@ -15,12 +15,12 @@ from lime.lime_text import LimeTextExplainer
 
 MAX_WORD_NUM = 40
 MAX_FEATURES = 200000
-TRESHOLD = 0.012
+TRESHOLD = 0.015
 MAX_WORD_NUM_2 = 40
 
-count_vect = joblib.load('vectorizer.jbl')
-transformer = joblib.load('transformer.jbl')
-model_bayes = joblib.load('model.jbl')
+count_vect = joblib.load('vectorizer_bayes.jbl')
+transformer = joblib.load('transformer_bayes.jbl')
+model_bayes = joblib.load('model_bayes.jbl')
 lemmer = nltk.stem.WordNetLemmatizer()
 
 model_attention = keras.models.load_model('attention_model')
