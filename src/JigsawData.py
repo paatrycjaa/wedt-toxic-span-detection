@@ -1,3 +1,9 @@
+"""
+Project Toxic Span Detection
+Implementation of class preprocessing input data from JigSaw into dataframe
+@authors: Julia Kłos, Patrycja Cieplicka
+@date: 12.01.2020
+"""
 import pandas as pd
 from ast import literal_eval
 from src.DataProcessing import DataProcessing
@@ -6,6 +12,9 @@ from nltk import tokenize
 import numpy as np
 
 class JigsawData(DataProcessing):
+    """
+    Class representing JigsawData and preprocessing the data into dataframe
+    """
     def __init__(self, MAX_WORD_NUM=40):
         self.MAX_WORD_NUM = MAX_WORD_NUM
 

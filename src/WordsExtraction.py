@@ -1,6 +1,15 @@
+"""
+Project Toxic Span Detection
+Implementation of class extracting words from given spans
+@authors: Julia Kłos, Patrycja Cieplicka
+@date: 12.01.2020
+"""
 from nltk.tokenize import sent_tokenize
+
 class WordsExtraction:
-    
+    """
+    Class created for extracting words from given spans
+    """
     def extractWordIndexUsingList(self,text, span_list):
         word_list = []
         for [fst, snd] in span_list:

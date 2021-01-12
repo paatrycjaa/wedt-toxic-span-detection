@@ -1,12 +1,21 @@
+"""
+Project Toxic Span Detection
+Implementation of class preprocessing input data from SemEval into dataframe
+@authors: Julia Kłos, Patrycja Cieplicka
+@date: 12.01.2020
+"""
+
 import pandas as pd
 from ast import literal_eval
 import numpy as np
 from src.WordsExtraction import WordsExtraction
 from src.preprocessing import clean_str, preprocess_bayes, get_diff
-from src.DataProcessing import DataProcessing
 from nltk import tokenize
 
 class SemEvalData(DataProcessing):
+    """
+    Class representing SemEvalData and preprocessing the data into dataframe
+    """
     def __init__(self, MAX_WORD_NUM=40):
         self.MAX_WORD_NUM = MAX_WORD_NUM
 
@@ -39,10 +48,8 @@ class SemEvalData(DataProcessing):
         toxicity = []
         for sentence in sentences:
             if any(word in sentence for word in toxic_words):
-                # toxicity.append(np.full( self.MAX_WORD_NUM, 1.0, dtype='float32'))
                 toxicity.append(1.0)
             else:
-                # toxicity.append(np.full(self.MAX_WORD_NUM, 0.0, dtype='float32'))
                 toxicity.append(0.0)
         return toxicity
     def get_classes_amount(self, train_df):
