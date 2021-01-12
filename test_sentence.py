@@ -8,7 +8,6 @@ from keras.models import load_model, Model
 import numpy as np
 import pickle
 from src.attention_exp import getWordsByAttention, wordAttentionWeights
-# from src.Attention import Attention
 import pickle
 from sklearn.pipeline import make_pipeline
 from lime.lime_text import LimeTextExplainer
@@ -57,7 +56,7 @@ def getPredictedWordsFromSentence(sentence, threshold,c):
     exp = explainer.explain_instance(sentence,c.predict_proba, num_features=6, top_labels = 2)
     expWords = exp.as_list()
     maxScore = max(expWords, key = lambda i : i[1])[0]
-    expWords = filter(lambda t: t[1] > threshold, expWords )
+    expWords = filter(lambda t: t[1] < threshold, expWords )
     wordsList = [i[0] for i in expWords]
     wordsList.append(maxScore) if maxScore not in wordsList else wordsList
     return wordsList
@@ -72,7 +71,7 @@ def test_sentence(text, classifierType):
         span = test_attention(text)
     return span
     
-def test_bayes(text):
+def test_bayes(text, treshold):
 
     tokenized = tokenize.sent_tokenize(text)
     sentences = [preprocess_bayes(sentence) for sentence in tokenized]
@@ -82,7 +81,7 @@ def test_bayes(text):
         x = count_vect.transform([data])
         y = model_bayes.predict(x)
         if y == 1.0:
-            toxic = getToxicWordsBayes(count_vect, x, 0.5)
+            toxic = getToxicWordsBayes(count_vect, x, treshold)
             toxic_words = [*toxic_words, *toxic]
 
     text_preprocessed = preprocess_bayes(text)
@@ -169,10 +168,10 @@ def test_lime(text):
     toxic_words  = []
     for i in range(len(y_pred)):
         #print(vect[i])
-        if np.argmax(y_pred[i]) == 1 :
+        if np.argmax(y_pred[i]) == 0 :
             text_ = ' '.join(sentences[i])
             #print(text_)
-            toxic = getPredictedWordsFromSentence(text_, TRESHOLD,c)
+            toxic = getPredictedWordsFromSentence(text_, -0.05,c)
             toxic_words = toxic_words + toxic
     diff = get_diff(text, text_cleaned)        
     spans = getSpansByToxicWords(toxic_words, text_cleaned,diff)
