@@ -33,5 +33,5 @@ Project for Text Data Mining course at EITI-WUT
 ## 4. Run program
 ### Unix/macOS 
 
-python test_sentence.py
+`python test_sentence.py
 
