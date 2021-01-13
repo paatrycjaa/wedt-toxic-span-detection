@@ -30,4 +30,8 @@ Project for Text Data Mining course at EITI-WUT
 
 `py -m pip install -r requirements.txt`
 
+## 4. Run program
+### Unix/macOS 
+
+python test_sentence.py
 
