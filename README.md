@@ -1,5 +1,6 @@
 # wedt-toxic-span-detection
 Project for Text Data Mining course at EITI-WUT
+
 Data: https://competitions.codalab.org/competitions/25623
 
 # Run the project:
