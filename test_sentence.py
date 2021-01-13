@@ -42,9 +42,6 @@ word_context = model_attention.get_layer('attention').get_weights()
 with open('tokenizer_nn.pickle', 'rb') as handle:
     tokenizer = pickle.load(handle)
 
-# LSTM-Lime
-model_lime = keras.models.load_model("lstm_pooling")
-c = make_pipeline(Transform(tokenizer),model_lime)
 
 class Transform():
     """
@@ -62,7 +59,9 @@ class Transform():
         X_ = vectorize(X, self.tokenizer)
         return X_
 
-
+# LSTM-Lime
+model_lime = keras.models.load_model("lstm_pooling")
+c = make_pipeline(Transform(tokenizer),model_lime)
 
 def getPredictedWordsFromSentence(sentence, threshold,c):
     """
@@ -90,7 +89,7 @@ def test_sentence(text, classifierType):
         span = test_attention(text)
     return span
     
-def test_bayes(text, treshold):
+def test_bayes(text):
     """
     Function returning toxic span using Bayes classifier
     """
@@ -102,7 +101,7 @@ def test_bayes(text, treshold):
         x = count_vect.transform([data])
         y = model_bayes.predict(x)
         if y == 1.0:
-            toxic = getToxicWordsBayes(count_vect, x, treshold)
+            toxic = getToxicWordsBayes(count_vect, x, 0)
             toxic_words = [*toxic_words, *toxic]
 
     text_preprocessed = preprocess_bayes(text)
@@ -153,7 +152,6 @@ def test_lime(text):
             toxic_words = toxic_words + toxic
     diff = get_diff(text, text_cleaned)        
     spans = getSpansByToxicWords(toxic_words, text_cleaned,diff)
-    print(spans)
     return spans
 
 def test_attention(text):
@@ -183,7 +181,51 @@ def test_attention(text):
 
 if __name__ == "__main__":
     nltk.download('wordnet')
-    span = test_sentence("Another idiot!", "attention")
-    span = test_sentence("To be or not be that is a question", "attention")
-    print(span)
-    #span = test_sentence("These freaking donkeys all need to be removed from office. I'm so sick and tired of these lifelong politicians who all seem clueless and could never run their own business.", "attention")
+
+    ifNotEnd = True
+    while ifNotEnd:
+        print("Witaj w programie wyznaczającym położenia wyrazów obraźliwych w komentarzu")
+        print("Co chcesz zrobić?")
+        print("1 - Wykryj wyrazy")
+        print("0 - Wyjście")
+
+        value = input("Wpisz cyfrę: \n")
+
+        try :
+            value = int(value)
+        except:
+            print("Podałeś nieprawidłowy znak")
+            continue
+
+        if value == 0 :
+            ifNotEnd = False
+            exit(0)
+        elif value == 1 :
+            text = input("Podaj komentarz: \n")
+            print("Którą metodę chcesz wybrać?")
+            print("2 - LSTM z atencją")
+            print("1 - LSTM i LIME")
+            print("0 - Bayes")
+            value = input("Wpisz cyfrę: \n")
+
+            try:
+                value = int(value)
+            except:
+                print("Podałeś nieprawidłowy znak")
+                continue
+
+            if value == 0 :
+                span = test_sentence(text, "bayes")
+                print("Położenie obrażliwych słów wg algorytmu bayesa")
+                print(span)
+            elif value == 1:
+                span = test_sentence(text, "lime")
+                print("Położenie obrażliwych słów wg algorytmu LSTM i LIME")
+                print(span)
+            elif value == 2:
+                span = test_sentence(text, "attention")
+                print("Położenie obrażliwych słów wg algorytmu LSTM z atencją")
+                print(span)
+            else: print("Podałeś nieprawidłową cyfrę")
+
+        else : print("Podałeś złą cyfrę")
